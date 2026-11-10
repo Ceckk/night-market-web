@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <title>Night Market</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+  </head>
+  <body>
+    <div id="unity-container" class="unity-desktop">
+      <canvas id="unity-canvas" width=540 height=1200 tabindex="-1"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+      <div id="unity-warning"> </div>
+    </div>
+    <script>
+      var canvas = document.querySelector("#unity-canvas");
+      var GAME_WIDTH = 540;
+      var GAME_HEIGHT = 1200;
+      var DESKTOP_MARGIN = 16;
+
+      function unityShowBanner(msg, type) {
+        var warningBanner = document.querySelector("#unity-warning");
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') div.style = 'background: red; padding: 10px;';
+        else {
+          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+          setTimeout(function() {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      function fitCanvasToWindow(margin) {
+        var availableWidth = Math.max(1, window.innerWidth - 2 * margin);
+        var availableHeight = Math.max(1, window.innerHeight - 2 * margin);
+        var scale = Math.min(availableWidth / GAME_WIDTH, availableHeight / GAME_HEIGHT);
+        canvas.style.width = Math.floor(GAME_WIDTH * scale) + "px";
+        canvas.style.height = Math.floor(GAME_HEIGHT * scale) + "px";
+      }
+
+      function layoutPhone() {
+        if (window.innerWidth > window.innerHeight) {
+          fitCanvasToWindow(0);
+        } else {
+          canvas.style.width = "";
+          canvas.style.height = "";
+        }
+      }
+
+      function layoutDesktop() {
+        fitCanvasToWindow(DESKTOP_MARGIN);
+      }
+
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/Web.loader.js";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/Web.data.unityweb",
+        frameworkUrl: buildUrl + "/Web.framework.js.unityweb",
+        codeUrl: buildUrl + "/Web.wasm.unityweb",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "Night Market",
+        productVersion: "1.0",
+        showBanner: unityShowBanner,
+      };
+
+      var layoutCanvas = layoutDesktop;
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+        document.querySelector("#unity-container").className = "unity-mobile";
+        layoutCanvas = layoutPhone;
+      }
+      layoutCanvas();
+      window.addEventListener("resize", layoutCanvas);
+      window.addEventListener("orientationchange", layoutCanvas);
+
+      document.querySelector("#unity-loading-bar").style.display = "block";
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+              }).then((unityInstance) => {
+                document.querySelector("#unity-loading-bar").style.display = "none";
+
+              }).catch((message) => {
+                alert(message);
+              });
+            };
+
+      document.body.appendChild(script);
+
+    </script>
+  </body>
+</html>
